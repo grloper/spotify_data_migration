@@ -55,6 +55,28 @@ This will read `spotify_data.json` and add the playlists and liked songs to the 
 python app.py --import-data
 ```
 
+### Enable Debug Mode
+Use `--debug` to get detailed logging and execution time information.
+```sh
+python app.py --export --debug
+```
+
+### Clear Cache Before Running
+Use `--clean-cache` to remove the cached authentication token before execution.
+```sh
+python app.py --import-data --clean-cache
+```
+
+### Combined Usage Example
+You can use multiple flags together:
+```sh
+python app.py --export --debug --clean-cache
+```
+This will:
+- Remove the cached authentication token
+- Export data
+- Provide detailed debug logs
+
 ---
 
 ## Additional Notes
@@ -85,8 +107,7 @@ requests==2.31.0
 - Make sure your **account is registered** as a user in the Developer Dashboard under "Users and Access."
 - Delete the `.cache` file if the token is invalid and try again:
   ```sh
-  rm -rf .cache
+  rm -rf .cache*
   ```
 
 If you encounter issues, refer to the [Spotify Web API documentation](https://developer.spotify.com/documentation/web-api/) or open an issue in your project repository.
-
