@@ -6,6 +6,7 @@ import spotipy
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 from logging_config import log
+import glob
 
 load_dotenv()
 
@@ -13,10 +14,10 @@ SPOTIFY_SCOPE = 'playlist-modify-public playlist-modify-private user-library-rea
 
 def authenticate(username: str, clean_cache: bool = False) -> spotipy.Spotify:
     """Authenticate a Spotify user."""
-    cache_path = f".cache-{username}"
-    if clean_cache and os.path.exists(cache_path):
-        log(f"Deleting cache file: {cache_path}", logging.INFO)
-        os.remove(cache_path)
+    if clean_cache:
+        for cache_file in glob.glob(".cache-*"):
+            log(f"Deleting cache file: {cache_file}", logging.INFO)
+            os.remove(cache_file)
     
     return spotipy.Spotify(auth_manager=SpotifyOAuth(
         client_id=os.getenv('CLIENT_ID'),
@@ -26,29 +27,18 @@ def authenticate(username: str, clean_cache: bool = False) -> spotipy.Spotify:
         username=username
     ))
 
-def fetch_playlist_tracks(sp: spotipy.Spotify, playlist_id: str) -> list:
-    """Retrieve all track URIs from a playlist."""
+
+def fetch_tracks(sp: spotipy.Spotify, fetch_func, *args) -> list:
+    """Generic function to fetch paginated Spotify track data."""
     tracks = []
     try:
-        results = sp.playlist_tracks(playlist_id)
+        results = fetch_func(*args)
         while results:
             tracks.extend([item['track']['uri'] for item in results['items'] if item['track']])
             results = sp.next(results) if results['next'] else None
     except Exception as e:
-        log(f"Error fetching tracks for playlist {playlist_id}: {e}", logging.ERROR)
+        log(f"Error fetching tracks: {e}", logging.ERROR)
     return tracks
-
-def fetch_liked_songs(sp: spotipy.Spotify) -> list:
-    """Retrieve all liked songs from the user's library."""
-    liked_songs = []
-    try:
-        results = sp.current_user_saved_tracks()
-        while results:
-            liked_songs.extend([track['track']['uri'] for track in results['items'] if track['track']])
-            results = sp.next(results) if results['next'] else None
-    except Exception as e:
-        log(f"Error fetching liked songs: {e}", logging.ERROR)
-    return liked_songs
 
 def delete_all_playlists_and_likes(debug: bool = False, clean_cache: bool = False):
     """Erase the Spotify account by deleting all playlists and liked songs."""
@@ -57,8 +47,7 @@ def delete_all_playlists_and_likes(debug: bool = False, clean_cache: bool = Fals
     
     log("Fetching playlists for deletion...")
     try:
-        playlists = sp.current_user_playlists()
-        for playlist in playlists['items']:
+        for playlist in sp.current_user_playlists()['items']:
             log(f"Deleting playlist: {playlist['name']}")
             sp.current_user_unfollow_playlist(playlist['id'])
     except Exception as e:
@@ -66,7 +55,7 @@ def delete_all_playlists_and_likes(debug: bool = False, clean_cache: bool = Fals
     
     log("Fetching liked songs for deletion...")
     try:
-        liked_songs = fetch_liked_songs(sp)
+        liked_songs = fetch_tracks(sp, sp.current_user_saved_tracks)
         for i in range(0, len(liked_songs), 50):
             sp.current_user_saved_tracks_delete(liked_songs[i:i+50])
         log("All liked songs deleted.")
@@ -83,19 +72,18 @@ def export_data(debug: bool = False, clean_cache: bool = False):
     log("Fetching playlists...")
     playlist_data = []
     try:
-        playlists = sp.current_user_playlists()
-        for playlist in playlists['items']:
+        for playlist in sp.current_user_playlists()['items']:
             log(f"Processing playlist: {playlist['name']}")
             playlist_data.append({
                 'id': playlist['id'],
                 'name': playlist['name'],
                 'public': playlist['public'],
-                'tracks': fetch_playlist_tracks(sp, playlist['id'])
+                'tracks': fetch_tracks(sp, sp.playlist_tracks, playlist['id'])
             })
     except Exception as e:
         log(f"Error fetching playlists: {e}", logging.ERROR)
     
-    liked_songs = fetch_liked_songs(sp)
+    liked_songs = fetch_tracks(sp, sp.current_user_saved_tracks)
     
     try:
         with open('spotify_data.json', 'w') as f:
@@ -130,10 +118,9 @@ def import_data(debug: bool = False, clean_cache: bool = False):
             new_playlist = sp.user_playlist_create(sp.me()['id'], playlist['name'], public=playlist['public'])
             new_playlist_id = new_playlist['id']
             
-            track_uris = playlist['tracks']
-            for i in range(0, len(track_uris), 100):
-                sp.playlist_add_items(new_playlist_id, track_uris[i:i+100])
-            log(f"Added {len(track_uris)} tracks to {playlist['name']}")
+            for i in range(0, len(playlist['tracks']), 100):
+                sp.playlist_add_items(new_playlist_id, playlist['tracks'][i:i+100])
+            log(f"Added {len(playlist['tracks'])} tracks to {playlist['name']}")
         except Exception as e:
             log(f"Error creating playlist {playlist['name']}: {e}", logging.ERROR)
     
