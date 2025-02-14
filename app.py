@@ -50,6 +50,31 @@ def fetch_liked_songs(sp: spotipy.Spotify) -> list:
         log(f"Error fetching liked songs: {e}", logging.ERROR)
     return liked_songs
 
+def delete_all_playlists_and_likes(debug: bool = False, clean_cache: bool = False):
+    """Erase the Spotify account by deleting all playlists and liked songs."""
+    start_time = time.time()
+    sp = authenticate(os.getenv('EXPORT_USERNAME'), clean_cache)
+    
+    log("Fetching playlists for deletion...")
+    try:
+        playlists = sp.current_user_playlists()
+        for playlist in playlists['items']:
+            log(f"Deleting playlist: {playlist['name']}")
+            sp.current_user_unfollow_playlist(playlist['id'])
+    except Exception as e:
+        log(f"Error deleting playlists: {e}", logging.ERROR)
+    
+    log("Fetching liked songs for deletion...")
+    try:
+        liked_songs = fetch_liked_songs(sp)
+        for i in range(0, len(liked_songs), 50):
+            sp.current_user_saved_tracks_delete(liked_songs[i:i+50])
+        log("All liked songs deleted.")
+    except Exception as e:
+        log(f"Error deleting liked songs: {e}", logging.ERROR)
+    
+    log(f"delete_all_playlists_and_likes() completed in {time.time() - start_time:.2f} seconds", logging.DEBUG if debug else logging.INFO)
+
 def export_data(debug: bool = False, clean_cache: bool = False):
     """Export user playlists and liked songs to a JSON file."""
     start_time = time.time()
@@ -116,9 +141,10 @@ def import_data(debug: bool = False, clean_cache: bool = False):
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Export and import Spotify data')
+    parser = argparse.ArgumentParser(description='Manage Spotify data')
     parser.add_argument('--export', action='store_true', help='Export data from Spotify')
     parser.add_argument('--import-data', action='store_true', help='Import data to Spotify')
+    parser.add_argument('--erase', action='store_true', help='Delete all playlists and liked songs')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--clean-cache', action='store_true', help='Delete OAuth cache before running')
     
@@ -128,3 +154,5 @@ if __name__ == '__main__':
         export_data(debug=args.debug, clean_cache=args.clean_cache)
     elif args.import_data:
         import_data(debug=args.debug, clean_cache=args.clean_cache)
+    elif args.erase:
+        delete_all_playlists_and_likes(debug=args.debug, clean_cache=args.clean_cache)
