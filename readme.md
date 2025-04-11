@@ -113,6 +113,71 @@ This will:
 
 ---
 
+## Code Structure
+
+### Project Organization
+```
+spotify_data_migration/
+├── src/
+│   ├── __init__.py
+│   ├── config.py         # Configuration and environment variables
+│   ├── spotify_manager.py # Core Spotify API interactions
+│   ├── data_handler.py   # JSON file operations
+│   ├── logger.py         # Logging configuration
+│   └── main.py          # CLI and main execution logic
+├── .env                 # Environment variables (see Setup section)
+├── requirements.txt     # Project dependencies
+└── README.md           # This documentation
+```
+
+### Key Components
+
+#### SpotifyManager
+The core class that handles all Spotify API interactions:
+- Authentication and token management
+- Playlist operations (fetch, create, delete)
+- Track operations (liked songs, playlist tracks)
+- Rate limiting and error handling
+- Automatic pagination for large collections
+
+Example of how pagination works:
+```python
+# The manager automatically handles paginated responses
+playlists = manager.get_all_playlists()  # Fetches all playlists
+liked_songs = manager.get_liked_songs()   # Fetches all liked songs
+```
+
+#### Data Format
+The exported JSON file structure:
+```json
+{
+    "playlists": [
+        {
+            "id": "playlist_id",
+            "name": "Playlist Name",
+            "public": true,
+            "description": "Playlist description",
+            "tracks": ["spotify:track:...", "spotify:track:..."]
+        }
+    ],
+    "liked_songs": ["spotify:track:...", "spotify:track:..."]
+}
+```
+
+#### Error Handling
+The script includes robust error handling for common scenarios:
+- Rate limiting (with automatic retry)
+- Network errors
+- Authentication issues
+- Invalid data formats
+- File I/O errors
+
+#### Batch Processing
+Large operations are automatically handled in batches to comply with Spotify API limits:
+- Adding/removing liked songs: 50 tracks per request
+- Adding tracks to playlists: 100 tracks per request
+
+---
 
 ## Additional Notes
 - The script requires **authorization** when running for the first time.
