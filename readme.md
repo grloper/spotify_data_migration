@@ -36,12 +36,17 @@ REDIRECT_URI='http://localhost:8080'
 ERASE_USERNAME='your_spotify_erase_username'
 ```
 
-### How to Get These Values?
-- **CLIENT_ID & CLIENT_SECRET**: Found in your **Spotify Developer Dashboard** under your created app.
-- **EXPORT_USERNAME**: Your Spotify username (can be found in your Spotify profile or via [this guide](https://community.spotify.com/t5/FAQs/What-s-a-Spotify-username/ta-p/5286512)).
-- **IMPORT_USERNAME**: The username of the account where you want to import the playlists and liked songs.
-- **REDIRECT_URI**: Should be set to http://localhost:8080 (same as added in the Spotify Developer settings).
-- **ERASE_USERNAME**: The username of the account from which you want to erase playlists and liked songs.
+
+### 🔍 Where to Get These Values?
+
+- **CLIENT_ID** and **CLIENT_SECRET**  
+  Found in your [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) under your created app.
+
+- **EXPORT_USERNAME / IMPORT_USERNAME / ERASE_USERNAME**  
+  These are your Spotify account usernames. You can find them in your Spotify profile or by following [this guide](https://community.spotify.com/t5/FAQs/What-s-a-Spotify-username/ta-p/5286512).
+
+- **REDIRECT_URI**  
+  This should match the redirect URI added in your Spotify app settings (typically: `http://localhost:8080`).
 
 ---
 
