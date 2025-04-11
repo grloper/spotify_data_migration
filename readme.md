@@ -14,11 +14,10 @@ This utility exports your **Spotify playlists and liked songs** to a JSON file a
   - [Import Data](#import-data)
   - [Erase Data](#erase-data)
   - [Additional CLI Options](#additional-cli-options)
+  - [Selective Operations](#selective-operations)
 - [Project Architecture](#project-architecture)
   - [Key Components](#key-components)
-- [Testing & Quality Assurance](#testing--quality-assurance)
 - [⚠️Troubleshooting⚠️](#troubleshooting)
-- [Enhancements & Future Improvements](#enhancements--future-improvements)
 - [Installing Dependencies](#installing-dependencies)
 
 ---
@@ -138,6 +137,48 @@ This command:
 - Exports data to `custom_export.json`.
 - Provides detailed debug logs.
 
+### Selective Operations
+
+You can use the `--selective` (or `-s`) flag to enable interactive selection of playlists for export, import, or deletion:
+
+```sh
+python -m src.main --export --selective
+python -m src.main --import-data --selective
+python -m src.main --erase --selective
+```
+
+This will present you with a list of available playlists and options to select specific ones:
+- **Enter numbers separated by commas** (e.g., `1,3,5`)
+- **Enter a range** (e.g., `1-5`)
+- **Enter `all`** to select all playlists
+- **Enter `public`** to select only public playlists
+- **Enter `private`** to select only private playlists
+
+For liked songs, you'll be prompted separately whether to include them in the operation.
+
+Example:
+
+```
+Available Playlists:
+------------------------------------------------------------
+#    Playlist Name                          Track Count Public
+------------------------------------------------------------
+1    Workout Mix                            45         Yes
+2    Chill Vibes                            120        No
+3    Party Playlist                         85         Yes
+...
+
+Selection options:
+- Enter numbers separated by commas (e.g., '1,3,5')
+- Enter a range (e.g., '1-5')
+- Enter 'all' to select all playlists
+- Enter 'public' to select only public playlists
+- Enter 'private' to select only private playlists
+- Enter 'q' or press Ctrl+C to cancel
+
+Select playlists: 1,3
+```
+
 ---
 
 ## Project Architecture
@@ -181,7 +222,7 @@ spotify_data_migration/
 
 ### **403 Forbidden Error**
 
-- Verify that your Spotify Developer app has the correct **Redirect URI** (http://127.0.0.1:8080).
+- Verify that your Spotify Developer app has the correct **Redirect URI** (`http://127.0.0.1:8080`).
 - Ensure the target Spotify account is registered as a user in your Spotify app settings.
 - Remove cached tokens by deleting any `.cache*` files:
 
@@ -210,12 +251,13 @@ Complete these steps to register the user:
 
 5. Click **Save** and try running the script again.
 
-For more details, refer to the [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api/).
+For further details, refer to the [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api/).
+
 
 
 ## Installing Dependencies
 
-Make sure all required dependencies are installed using the provided `requirements.txt`:
+Ensure that all required dependencies are installed using the provided `requirements.txt`:
 
 ```sh
 pip install -r requirements.txt
@@ -232,5 +274,5 @@ requests==2.31.0
 ---
 
 Feel free to contribute improvements or report issues by opening an issue in the project repository. Enjoy backing up and migrating your Spotify data with confidence!
-
+```
 
