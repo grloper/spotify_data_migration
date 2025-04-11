@@ -32,8 +32,8 @@ CLIENT_ID='your_spotify_client_id'
 CLIENT_SECRET='your_spotify_client_secret'
 EXPORT_USERNAME='your_spotify_export_username'
 IMPORT_USERNAME='your_spotify_import_username'
-REDIRECT_URI='http://localhost:8080'
 ERASE_USERNAME='your_spotify_erase_username'
+REDIRECT_URI='http://localhost:8080'
 ```
 
 
@@ -52,54 +52,67 @@ ERASE_USERNAME='your_spotify_erase_username'
 
 ## Usage
 
+Run the script using the Python module execution flag (`-m`) followed by the package path (`src.main`) and the desired action flag.
+
 ### Export Data
-This will fetch all playlists and liked songs from the **exporting account** and save them to spotify_data.json.
+This will fetch all playlists and liked songs from the **exporting account** (defined by `EXPORT_USERNAME` in `.env`) and save them to `spotify_data.json` (or the file specified by `--data-file`).
 
 ```sh
-python app.py --export
+python -m src.main --export
 ```
 
 ### Import Data
-This will read spotify_data.json and add the playlists and liked songs to the **importing account**.
+This will read the data file (`spotify_data.json` by default) and add the playlists and liked songs to the **importing account** (defined by `IMPORT_USERNAME` in `.env`).
 
 ```sh
-python app.py --import-data
+python -m src.main --import-data
 ```
 
 ### Erase Data
-This will erase playlists and liked songs from the **erasing account** specified in `.env`.
+This will erase **ALL** playlists and liked songs from the **erasing account** (defined by `ERASE_USERNAME` in `.env`). **Use with extreme caution!** You will be prompted for confirmation.
 
 ```sh
-python app.py --erase
+python -m src.main --erase
 ```
 
-### Enable Debug Mode
-Use --debug to get detailed logging and execution time information.
+### Options
+
+#### Enable Debug Mode
+Use `--debug` to get detailed logging information, including API call details and timing.
 
 ```sh
-python app.py --export --debug
+python -m src.main --export --debug
 ```
 
-### Clear Cache Before Running (**Recommended**)
-Using **--clean-cache** will remove the cached authentication token before execution, ensuring the script runs smoothly without outdated credentials.
+#### Clear Cache Before Running (**Recommended**)
+Using `--clean-cache` will remove the cached authentication token for the specified user before execution. This is useful if you encounter authentication issues or switch users frequently.
 
 ```sh
-python app.py --import-data --clean-cache
+python -m src.main --import-data --clean-cache
+```
+
+#### Specify Data File
+Use `--data-file` to specify a different JSON file path for exporting or importing.
+
+```sh
+python -m src.main --export --data-file my_backup.json
+python -m src.main --import-data --data-file my_backup.json
 ```
 
 ### Combined Usage Example
 You can use multiple flags together:
 
 ```sh
-python app.py --export --debug --clean-cache
+python -m src.main --export --debug --clean-cache --data-file custom_export.json 
 ```
 
 This will:
-- Remove the cached authentication token (**recommended**)
-- Export data
-- Provide detailed debug logs
+- Remove the cached authentication token for the `EXPORT_USERNAME`.
+- Export data to `custom_export.json`.
+- Provide detailed debug logs.
 
 ---
+
 
 ## Additional Notes
 - The script requires **authorization** when running for the first time.
