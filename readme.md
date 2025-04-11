@@ -1,17 +1,38 @@
 # Spotify Playlist & Liked Songs Export/Import Script
 
-This script allows you to export your **Spotify playlists and liked songs** to a JSON file and later import them to another Spotify account.
+This utility exports your **Spotify playlists and liked songs** to a JSON file and later imports them to another Spotify account. It is designed with modularity, error handling, and batch processing in mind for large collections.
+
+---
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+  - [1. Create a .env File](#1-create-a-env-file)
+- [Usage](#usage)
+  - [Export Data](#export-data)
+  - [Import Data](#import-data)
+  - [Erase Data](#erase-data)
+  - [Additional CLI Options](#additional-cli-options)
+- [Project Architecture](#project-architecture)
+  - [Key Components](#key-components)
+- [Testing & Quality Assurance](#testing--quality-assurance)
+- [⚠️Troubleshooting⚠️](#troubleshooting)
+- [Enhancements & Future Improvements](#enhancements--future-improvements)
+- [Installing Dependencies](#installing-dependencies)
+
+---
 
 ## Prerequisites
 
 1. **Create a Spotify Developer App**
-   - Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
-   - Click **Create an App**
-   - Set an app name and description
-   - Copy the **Client ID** and **Client Secret** (you will use them in the .env file)
-   - Under **Redirect URIs**, add http://127.0.0.1:8080
-   - Click **Save**
-   - **IMPORTANT:** Ensure that the user is registered under **User Management** (see Troubleshooting section below).
+   - Visit the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/).
+   - Click **Create an App**.
+   - Set an app name and description.
+   - Copy the **Client ID** and **Client Secret** (you will use these in the `.env` file).
+   - Under **Redirect URIs**, add `http://127.0.0.1:8080`.
+   - Click **Save**.
+   - **IMPORTANT:** Ensure that the account you wish to use is added under **User Management** (see Troubleshooting).
 
 2. **Install Required Python Packages**
 
@@ -25,9 +46,9 @@ This script allows you to export your **Spotify playlists and liked songs** to a
 
 ### 1. Create a .env File
 
-Create a .env file in the root directory - same directory as README.md and add the following:
+Create a `.env` file in the project root (the same directory as this README) and populate it with your credentials:
 
-```
+```env
 CLIENT_ID='your_spotify_client_id'
 CLIENT_SECRET='your_spotify_client_secret'
 EXPORT_USERNAME='your_spotify_export_username'
@@ -36,164 +57,171 @@ ERASE_USERNAME='your_spotify_erase_username'
 REDIRECT_URI='http://127.0.0.1:8080'
 ```
 
-
-### 🔍 Where to Get These Values?
+#### 🔍 Where to Get These Values?
 
 - **CLIENT_ID** and **CLIENT_SECRET**  
-  Found in your [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) under your created app.
+  Obtain these from your [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) under your created app.
 
 - **EXPORT_USERNAME / IMPORT_USERNAME / ERASE_USERNAME**  
-  These are your Spotify account usernames. You can find them in your Spotify profile or by following [this guide](https://community.spotify.com/t5/FAQs/What-s-a-Spotify-username/ta-p/5286512).
+  These are your Spotify account usernames. Find them on your Spotify profile or review [this guide](https://community.spotify.com/t5/FAQs/What-s-a-Spotify-username/ta-p/5286512).
 
 - **REDIRECT_URI**  
-  This should match the redirect URI added in your Spotify app settings (typically: `http://127.0.0.1:8080`).
+  This URI must match the one added in your Spotify app settings (typically: `http://127.0.0.1:8080`).
 
 ---
 
 ## Usage
 
-Run the script using the Python module execution flag (`-m`) followed by the package path (`src.main`) and the desired action flag.
+Execute the script using the Python module flag (`-m`) followed by the package path (`src.main`) and your chosen action flag.
 
 ### Export Data
-This will fetch all playlists and liked songs from the **exporting account** (defined by `EXPORT_USERNAME` in `.env`) and save them to `spotify_data.json` (or the file specified by `--data-file`).
+
+Fetch all playlists and liked songs from the **exporting account** (defined by `EXPORT_USERNAME` in `.env`) and save the data into `spotify_data.json` (or your specified file):
 
 ```sh
 python -m src.main --export
 ```
 
 ### Import Data
-This will read the data file (`spotify_data.json` by default) and add the playlists and liked songs to the **importing account** (defined by `IMPORT_USERNAME` in `.env`).
+
+Read the JSON file (defaults to `spotify_data.json`) and import the playlists and liked songs to the **importing account** (specified by `IMPORT_USERNAME` in `.env`):
 
 ```sh
 python -m src.main --import-data
 ```
 
 ### Erase Data
-This will erase **ALL** playlists and liked songs from the **erasing account** (defined by `ERASE_USERNAME` in `.env`). **Use with extreme caution!** You will be prompted for confirmation.
+
+**Warning:** This action will erase **all** playlists and liked songs from the **erasing account** (defined by `ERASE_USERNAME` in `.env`). A confirmation prompt will be displayed.
 
 ```sh
 python -m src.main --erase
 ```
 
-### Options
+### Additional CLI Options
 
 #### Enable Debug Mode
-Use `--debug` to get detailed logging information, including API call details and timing.
+
+For detailed logging including API calls and timing, use the `--debug` flag:
 
 ```sh
 python -m src.main --export --debug
 ```
 
-#### Clear Cache Before Running (**Recommended**)
-Using `--clean-cache` will remove the cached authentication token for the specified user before execution. This is useful if you encounter authentication issues or switch users frequently.
+#### Clear Cache Before Running
+
+Using `--clean-cache` removes any cached authentication tokens before execution. This is useful when troubleshooting authentication issues or switching accounts:
 
 ```sh
 python -m src.main --import-data --clean-cache
 ```
 
 #### Specify Data File
-Use `--data-file` to specify a different JSON file path for exporting or importing.
+
+You can define a custom JSON file for export/import with the `--data-file` flag:
 
 ```sh
 python -m src.main --export --data-file my_backup.json
 python -m src.main --import-data --data-file my_backup.json
 ```
 
-### Combined Usage Example
-You can use multiple flags together:
+#### Combined Usage Example
+
+You may combine several options:
 
 ```sh
 python -m src.main --export --debug --clean-cache --data-file custom_export.json 
 ```
 
-This will:
-- Remove the cached authentication token for the `EXPORT_USERNAME`.
-- Export data to `custom_export.json`.
-- Provide detailed debug logs.
+This command:
+- Clears the cached token for the `EXPORT_USERNAME`.
+- Exports data to `custom_export.json`.
+- Provides detailed debug logs.
 
 ---
 
-## Code Structure
+## Project Architecture
 
-### Project Organization
+The project is organized for modularity and ease of maintenance:
+
 ```
 spotify_data_migration/
 ├── src/
 │   ├── __init__.py
-│   ├── config.py         # Configuration and environment variables
-│   ├── spotify_manager.py # Core Spotify API interactions
-│   ├── data_handler.py   # JSON file operations
-│   ├── logger.py         # Logging configuration
-│   └── main.py          # CLI and main execution logic
-├── .env                 # Environment variables (see Setup section)
-├── requirements.txt     # Project dependencies
-└── README.md           # This documentation
+│   ├── config.py         # Loads configuration & environment variables
+│   ├── spotify_manager.py # Core interactions with the Spotify API, including:
+│   │                     #  - Authentication
+│   │                     #  - Playlist and track operations (with automatic pagination)
+│   │                     #  - Rate limiting and error handling
+│   ├── data_handler.py   # JSON operations for export/import
+│   ├── logger.py         # Logging configuration and setup
+│   └── main.py           # CLI and main execution logic
+├── .env                  # Environment variable configuration
+├── requirements.txt      # Project dependencies
+└── README.md             # Documentation (this file)
 ```
 
 ### Key Components
 
-#### SpotifyManager
-The core class that handles all Spotify API interactions:
-- Authentication and token management
-- Playlist operations (fetch, create, delete)
-- Track operations (liked songs, playlist tracks)
-- Rate limiting and error handling
-- Automatic pagination for large collections
+- **SpotifyManager:**  
+  Contains methods for authenticating, fetching playlists & liked songs, handling paginated API responses, and managing rate limits (e.g., automatic retries with exponential backoff).
 
-Example of how pagination works:
-```python
-# The manager automatically handles paginated responses
-playlists = manager.get_all_playlists()  # Fetches all playlists
-liked_songs = manager.get_liked_songs()   # Fetches all liked songs
+- **Data Handler:**  
+  Provides robust functions to export data to a JSON file and import data from it, ensuring data integrity and proper error handling during file operations.
+
+- **Logger:**  
+  Configured for both human-readable logs and optional JSON-formatted logs for integration with monitoring tools.
+
+- **CLI (main.py):**  
+  Parses command-line arguments and orchestrates the overall export/import/erase operations, with user confirmations for critical operations.
+
+
+
+## ⚠️Troubleshooting⚠️
+
+### **403 Forbidden Error**
+
+- Verify that your Spotify Developer app has the correct **Redirect URI** (http://127.0.0.1:8080).
+- Ensure the target Spotify account is registered as a user in your Spotify app settings.
+- Remove cached tokens by deleting any `.cache*` files:
+
+  ```sh
+  rm -rf .cache*
+  ```
+
+### **User Not Registered Error**
+
+If you see the error message below:
+
+```
+Check settings on developer.spotify.com/dashboard, the user may not be registered., reason: None
 ```
 
-#### Data Format
-The exported JSON file structure:
-```json
-{
-    "playlists": [
-        {
-            "id": "playlist_id",
-            "name": "Playlist Name",
-            "public": true,
-            "description": "Playlist description",
-            "tracks": ["spotify:track:...", "spotify:track:..."]
-        }
-    ],
-    "liked_songs": ["spotify:track:...", "spotify:track:..."]
-}
-```
+Complete these steps to register the user:
 
-#### Error Handling
-The script includes robust error handling for common scenarios:
-- Rate limiting (with automatic retry)
-- Network errors
-- Authentication issues
-- Invalid data formats
-- File I/O errors
+1. Visit the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/).
+2. Open your Spotify App.
+3. Go to **Edit Settings** → **User Management**.
+4. Add the user in the `username:email` format, for example:
 
-#### Batch Processing
-Large operations are automatically handled in batches to comply with Spotify API limits:
-- Adding/removing liked songs: 50 tracks per request
-- Adding tracks to playlists: 100 tracks per request
+   ```
+   myspotifyusername:myemail@example.com
+   ```
 
----
+5. Click **Save** and try running the script again.
 
-## Additional Notes
-- The script requires **authorization** when running for the first time.
-- Make sure the Spotify Developer app is correctly set up with the required **scopes**.
-- The export/import process may take a while depending on the number of playlists and songs.
+For more details, refer to the [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api/).
 
----
 
 ## Installing Dependencies
-Ensure you have the required dependencies installed using the requirements.txt file:
+
+Make sure all required dependencies are installed using the provided `requirements.txt`:
 
 ```sh
 pip install -r requirements.txt
 ```
 
-Contents of requirements.txt:
+Contents of `requirements.txt`:
 
 ```
 spotipy==2.23.0
@@ -203,41 +231,6 @@ requests==2.31.0
 
 ---
 
-### Troubleshooting
+Feel free to contribute improvements or report issues by opening an issue in the project repository. Enjoy backing up and migrating your Spotify data with confidence!
 
-#### **403 Forbidden Error**:
-- Ensure the Spotify Developer app has the correct **Redirect URI** set (http://127.0.0.1:8080).
-- Make sure your **account is registered** as a user in the Developer Dashboard under "Users and Access."
-- Delete the .cache file if the token is invalid and try again:
 
-  ```sh
-  rm -rf .cache*
-  ```
-
-#### **User Not Registered Error**:
-If you encounter an error like:
-
-```
-Check settings on developer.spotify.com/dashboard, the user may not be registered., reason: None
-```
-
-You need to **register the user in the Spotify Developer App**:
-
-1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/).
-2. Open your **Spotify App**.
-3. Navigate to **Edit Settings** → **User Management**.
-4. Add the user in the following **key-value format**:
-   
-   ```
-   username:email
-   ```
-   
-   Example:
-   ```
-   myspotifyusername:myemail@example.com
-   ```
-5. Click **Save**.
-
-After completing these steps, try running the script again.
-
-If you encounter further issues, refer to the [Spotify Web API documentation](https://developer.spotify.com/documentation/web-api/) or open an issue in your project repository.
