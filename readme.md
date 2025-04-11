@@ -291,5 +291,5 @@ requests==2.31.0
 ---
 
 Feel free to contribute improvements or report issues by opening an issue in the project repository. Enjoy backing up and migrating your Spotify data with confidence!
-```
+
 
