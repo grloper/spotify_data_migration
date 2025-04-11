@@ -45,16 +45,33 @@ This utility exports your **Spotify playlists and liked songs** to a JSON file a
 
 ### 1. Create a .env File
 
-Create a `.env` file in the project root (the same directory as this README) and populate it with your credentials:
+Create a `.env` file in the project root directory and add your Spotify API credentials.
+
+#### Option 1: Different accounts for each operation
+
+Use this configuration if you want to export from one account and import to another:
 
 ```env
 CLIENT_ID='your_spotify_client_id'
 CLIENT_SECRET='your_spotify_client_secret'
-EXPORT_USERNAME='your_spotify_export_username'
-IMPORT_USERNAME='your_spotify_import_username'
-ERASE_USERNAME='your_spotify_erase_username'
+EXPORT_USERNAME='account_to_export_from'
+IMPORT_USERNAME='account_to_import_to'
+ERASE_USERNAME='account_to_erase_data_from'
 REDIRECT_URI='http://127.0.0.1:8080'
 ```
+
+#### Option 2: Same account for all operations
+
+Use this simpler configuration if you're using the same Spotify account for all operations, or plan to manually change the account between runs.
+
+```env
+CLIENT_ID='your_spotify_client_id'
+CLIENT_SECRET='your_spotify_client_secret'
+SPOTIFY_USERNAME='your_spotify_username'
+REDIRECT_URI='http://127.0.0.1:8080'
+```
+
+The script will use `SPOTIFY_USERNAME` as a fallback when operation-specific usernames aren't provided.
 
 #### 🔍 Where to Get These Values?
 

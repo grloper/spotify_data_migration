@@ -20,9 +20,14 @@ REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://127.0.0.1:8080') # Default if n
 
 # --- Usernames ---
 # Ensure these are set in your .env file or environment
-EXPORT_USERNAME = os.getenv('EXPORT_USERNAME')
-IMPORT_USERNAME = os.getenv('IMPORT_USERNAME')
-ERASE_USERNAME = os.getenv('ERASE_USERNAME')
+
+# Primary username (used if operation-specific username is not provided)
+SPOTIFY_USERNAME = os.getenv('SPOTIFY_USERNAME')
+
+# Operation-specific usernames (fall back to primary username if not set)
+EXPORT_USERNAME = os.getenv('EXPORT_USERNAME', SPOTIFY_USERNAME)
+IMPORT_USERNAME = os.getenv('IMPORT_USERNAME', SPOTIFY_USERNAME)
+ERASE_USERNAME = os.getenv('ERASE_USERNAME', SPOTIFY_USERNAME)
 
 # --- Spotify API Scopes ---
 # Added 'playlist-read-private' to ensure all playlists are fetched during export
@@ -45,13 +50,15 @@ def validate_config() -> bool:
     """Checks if essential configuration variables are set."""
     required_vars = {
         'CLIENT_ID': CLIENT_ID, 
-        'CLIENT_SECRET': CLIENT_SECRET, 
-        'EXPORT_USERNAME': EXPORT_USERNAME, 
-        'IMPORT_USERNAME': IMPORT_USERNAME, 
-        'ERASE_USERNAME': ERASE_USERNAME,
+        'CLIENT_SECRET': CLIENT_SECRET,
         'REDIRECT_URI': REDIRECT_URI
     }
-    missing_vars = [name for name, value in required_vars.items() if not value]
+    
+    # We need at least one username to be set
+    if not SPOTIFY_USERNAME and not any([EXPORT_USERNAME, IMPORT_USERNAME, ERASE_USERNAME]):
+        missing_vars = ["SPOTIFY_USERNAME or operation-specific usernames"]
+    else:
+        missing_vars = [name for name, value in required_vars.items() if not value]
     
     if missing_vars:
         logger.error(f"Missing required configuration: {', '.join(missing_vars)}")
