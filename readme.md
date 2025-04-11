@@ -9,7 +9,7 @@ This script allows you to export your **Spotify playlists and liked songs** to a
    - Click **Create an App**
    - Set an app name and description
    - Copy the **Client ID** and **Client Secret** (you will use them in the .env file)
-   - Under **Redirect URIs**, add http://localhost:8080
+   - Under **Redirect URIs**, add http://127.0.0.1:8080
    - Click **Save**
    - **IMPORTANT:** Ensure that the user is registered under **User Management** (see Troubleshooting section below).
 
@@ -25,7 +25,7 @@ This script allows you to export your **Spotify playlists and liked songs** to a
 
 ### 1. Create a .env File
 
-Create a .env file in the same directory as app.py and add the following:
+Create a .env file in the root directory - same directory as README.md and add the following:
 
 ```
 CLIENT_ID='your_spotify_client_id'
@@ -33,7 +33,7 @@ CLIENT_SECRET='your_spotify_client_secret'
 EXPORT_USERNAME='your_spotify_export_username'
 IMPORT_USERNAME='your_spotify_import_username'
 ERASE_USERNAME='your_spotify_erase_username'
-REDIRECT_URI='http://localhost:8080'
+REDIRECT_URI='http://127.0.0.1:8080'
 ```
 
 
@@ -46,7 +46,7 @@ REDIRECT_URI='http://localhost:8080'
   These are your Spotify account usernames. You can find them in your Spotify profile or by following [this guide](https://community.spotify.com/t5/FAQs/What-s-a-Spotify-username/ta-p/5286512).
 
 - **REDIRECT_URI**  
-  This should match the redirect URI added in your Spotify app settings (typically: `http://localhost:8080`).
+  This should match the redirect URI added in your Spotify app settings (typically: `http://127.0.0.1:8080`).
 
 ---
 
@@ -141,7 +141,7 @@ requests==2.31.0
 ### Troubleshooting
 
 #### **403 Forbidden Error**:
-- Ensure the Spotify Developer app has the correct **Redirect URI** set (http://localhost:8080).
+- Ensure the Spotify Developer app has the correct **Redirect URI** set (http://127.0.0.1:8080).
 - Make sure your **account is registered** as a user in the Developer Dashboard under "Users and Access."
 - Delete the .cache file if the token is invalid and try again:
 
