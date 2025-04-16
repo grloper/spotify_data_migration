@@ -6,6 +6,19 @@ This utility exports your **Spotify playlists and liked songs** to a JSON file a
 
 ---
 
+## Quick Download & Installation
+
+### Windows Users
+1. Download the latest installer from the [Releases](https://github.com/grloper/spotify_data_migration/releases) page
+2. Run the installer and follow the prompts
+3. Launch the application from your Start menu
+4. Configure your Spotify API credentials on first launch
+
+### Other Platforms
+For Mac, Linux, or running from source code, see the [Installation Options](#installation-options) section below.
+
+---
+
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
@@ -299,19 +312,6 @@ The GUI is organized into several tabs:
 - **Start Export:** Initiates the export process based on the settings in the Setup tab.
 
 ### Import Tab
-
-- **Selective Import:** Check this to choose specific playlists from the data file to import. If unchecked, all playlists and liked songs (unless deselected in the prompt) from the file will be imported.
-- **Clean Cache Before Import:** Clears the authentication cache before starting the import.
-- **Start Import:** Initiates the import process using the data file specified in the Setup tab.
-
-### Erase Tab
-
-- **⚠️ WARNING:** Use this tab with extreme caution!
-- **Selective Erase:** Check this (recommended) to choose specific playlists to delete. You will also be prompted about deleting liked songs. If unchecked, **all** playlists and liked songs will be deleted after multiple confirmations.
-- **Clean Cache Before Erase:** Clears the authentication cache before starting the erase operation.
-- **Start Erase:** Initiates the deletion process on the account specified in the Setup tab.
-
-### Logs Tab
 
 - Displays real-time logs from the application.
 - Log messages are color-coded by severity (Error, Warning, Info, Debug).
