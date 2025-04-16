@@ -1,6 +1,6 @@
 # Spotify Playlist & Liked Songs Export/Import Script
 
-![GUI Screenshot](image.png)
+![GUI Screenshot](assets\image.png)
 
 This utility exports your **Spotify playlists and liked songs** to a JSON file and later imports them to another Spotify account. It offers both a command-line interface (CLI) and a graphical user interface (GUI), designed with modularity, error handling, and batch processing in mind for large collections.
 
