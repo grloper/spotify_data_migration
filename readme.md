@@ -11,6 +11,9 @@ This utility exports your **Spotify playlists and liked songs** to a JSON file a
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
   - [1. Create a .env File](#1-create-a-env-file)
+- [Installation Options](#installation-options)
+  - [Option 1: Use Executable Installer](#option-1-use-executable-installer)
+  - [Option 2: Install from Source](#option-2-install-from-source)
 - [Usage](#usage)
   - [Command-Line Interface (CLI)](#command-line-interface-cli)
   - [Graphical User Interface (GUI)](#graphical-user-interface-gui)
@@ -28,6 +31,7 @@ This utility exports your **Spotify playlists and liked songs** to a JSON file a
 - [Project Architecture](#project-architecture)
   - [Key Components](#key-components)
 - [⚠️Troubleshooting⚠️](#troubleshooting)
+- [Building Executables](#building-executables)
 - [Installing Dependencies](#installing-dependencies)
 
 ---
@@ -93,6 +97,55 @@ The script will use `SPOTIFY_USERNAME` as a fallback when operation-specific use
 
 - **REDIRECT_URI**  
   This URI must match the one added in your Spotify app settings (typically: `http://127.0.0.1:8080`).
+
+---
+
+## Installation Options
+
+You can either download a pre-built executable for your platform or install from source.
+
+### Option 1: Use Executable Installer
+
+For users who prefer not to install Python or manage dependencies:
+
+1. **Download the Installer**:
+   - Go to the [Releases](https://github.com/yourusername/spotify_data_migration/releases) page
+   - Download the appropriate installer for your system:
+     - Windows: `SpotifyDataMigration-Setup-vX.X.X.exe` or `SpotifyDataMigration-vX.X.X.msi`
+     - macOS: `SpotifyDataMigration-vX.X.X.dmg` (if available)
+     - Linux: `spotify-data-migration_X.X.X_amd64.deb` or `.rpm` (if available)
+
+2. **Run the Installer**:
+   - Windows: Double-click the `.exe` or `.msi` file and follow the installation wizard
+   - macOS: Open the `.dmg` file and drag the application to your Applications folder
+   - Linux: Use your package manager to install the `.deb` or `.rpm` file
+
+3. **Launch the Application**:
+   - Windows: Find "Spotify Data Migration" in your Start menu
+   - macOS: Open from Applications
+   - Linux: Run from your applications menu or use `spotify-data-migration` in terminal
+
+4. **First-time Setup**:
+   - The application will prompt you to configure your Spotify API credentials on first launch
+   - Follow the same setup steps described in the [Setup](#setup) section
+
+### Option 2: Install from Source
+
+If you prefer to run the Python code directly:
+
+Ensure that all required dependencies are installed using the provided `requirements.txt`:
+
+```sh
+pip install -r requirements.txt
+```
+
+Contents of `requirements.txt`:
+
+```
+spotipy==2.23.0
+python-dotenv==1.0.0
+requests==2.31.0
+```
 
 ---
 
@@ -342,6 +395,114 @@ Complete these steps to register the user:
 5. Click **Save** and try running the script again.
 
 For further details, refer to the [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api/).
+
+---
+
+## Building Executables
+
+Project maintainers can build executable installers for distribution:
+
+### Windows Executable with PyInstaller
+
+1. Install PyInstaller and UPX (optional, for better compression):
+   ```sh
+   pip install pyinstaller
+   # Optional: Download UPX from https://github.com/upx/upx/releases and add to PATH
+   ```
+
+2. Build the executable with proper metadata:
+   ```sh
+   pyinstaller --name "SpotifyDataMigration" --windowed --icon=assets/spotify_icon.ico ^
+               --add-data "assets/*;assets/" --clean ^
+               --noupx ^
+               --version-file=version_info.txt ^
+               spotify_migrator.py
+   ```
+
+3. Create a `version_info.txt` file first:
+   ```
+   # UTF-8
+   #
+   # For more details about fixed file info 'ffi' see:
+   # http://msdn.microsoft.com/en-us/library/ms646997.aspx
+   VSVersionInfo(
+     ffi=FixedFileInfo(
+       # filevers and prodvers should be always a tuple with four items: (1, 2, 3, 4)
+       # Set not needed items to zero 0.
+       filevers=(1, 0, 0, 0),
+       prodvers=(1, 0, 0, 0),
+       # Contains a bitmask that specifies the valid bits 'flags'r
+       mask=0x3f,
+       # Contains a bitmask that specifies the Boolean attributes of the file.
+       flags=0x0,
+       # The operating system for which this file was designed.
+       # 0x4 - NT and there is no need to change it.
+       OS=0x40004,
+       # The general type of file.
+       # 0x1 - the file is an application.
+       fileType=0x1,
+       # The function of the file.
+       # 0x0 - the function is not defined for this fileType
+       subtype=0x0,
+       # Creation date and time stamp.
+       date=(0, 0)
+     ),
+     kids=[
+       StringFileInfo(
+         [
+         StringTable(
+           u'040904B0',
+           [StringStruct(u'CompanyName', u'YourName'),
+           StringStruct(u'FileDescription', u'Spotify Data Migration Tool'),
+           StringStruct(u'FileVersion', u'1.0.0'),
+           StringStruct(u'InternalName', u'spotify_data_migration'),
+           StringStruct(u'LegalCopyright', u'© 2023-2024 YourName. All rights reserved.'),
+           StringStruct(u'OriginalFilename', u'SpotifyDataMigration.exe'),
+           StringStruct(u'ProductName', u'Spotify Data Migration'),
+           StringStruct(u'ProductVersion', u'1.0.0')])
+         ]), 
+       VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+     ]
+   )
+   ```
+
+### Reducing Antivirus False Positives
+
+To prevent your executable from being flagged as a virus:
+
+1. **Sign your code** (ideal solution):
+   - Purchase a code signing certificate from a trusted provider
+   - Sign your executable using tools like `signtool.exe` (Windows)
+
+2. **If you can't sign your code**:
+   - Use the `--noupx` flag in PyInstaller to avoid compression that triggers some AV
+   - Add proper version metadata as shown above
+   - Submit your installer to Microsoft for analysis at the [Windows Defender portal](https://www.microsoft.com/en-us/wdsi/filesubmission)
+   - Create an installer with Inno Setup as this has better reputation
+   - Consider disabling the console with `--windowed`
+   - Add detailed instructions for users who encounter AV warnings
+
+### Windows Installer with Inno Setup
+
+1. Download and install [Inno Setup](https://jrsoftware.org/isinfo.php)
+2. Use the script in `installer/windows_installer.iss` to build the installer
+3. Run Inno Setup and compile the script
+
+### macOS App Bundle
+
+1. Use PyInstaller with macOS options:
+   ```sh
+   pyinstaller --name "SpotifyDataMigration" --windowed --icon=assets/spotify_icon.icns --add-data "assets/*:assets/" src/main.py
+   ```
+
+2. Create a DMG file using [create-dmg](https://github.com/create-dmg/create-dmg) or similar tool
+
+### Publishing Releases on GitHub
+
+1. Create a new release on GitHub
+2. Upload the built installers and executables
+3. Add release notes describing changes
+4. Publish the release
 
 ---
 
