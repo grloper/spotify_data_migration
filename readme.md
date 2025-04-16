@@ -1,6 +1,8 @@
 # Spotify Playlist & Liked Songs Export/Import Script
 
-This utility exports your **Spotify playlists and liked songs** to a JSON file and later imports them to another Spotify account. It is designed with modularity, error handling, and batch processing in mind for large collections.
+![GUI Screenshot](image.png)
+
+This utility exports your **Spotify playlists and liked songs** to a JSON file and later imports them to another Spotify account. It offers both a command-line interface (CLI) and a graphical user interface (GUI), designed with modularity, error handling, and batch processing in mind for large collections.
 
 ---
 
@@ -10,11 +12,19 @@ This utility exports your **Spotify playlists and liked songs** to a JSON file a
 - [Setup](#setup)
   - [1. Create a .env File](#1-create-a-env-file)
 - [Usage](#usage)
+  - [Command-Line Interface (CLI)](#command-line-interface-cli)
+  - [Graphical User Interface (GUI)](#graphical-user-interface-gui)
   - [Export Data](#export-data)
   - [Import Data](#import-data)
   - [Erase Data](#erase-data)
   - [Additional CLI Options](#additional-cli-options)
   - [Selective Operations](#selective-operations)
+- [GUI Mode](#gui-mode)
+  - [Setup Tab](#setup-tab)
+  - [Export Tab](#export-tab)
+  - [Import Tab](#import-tab)
+  - [Erase Tab](#erase-tab)
+  - [Logs Tab](#logs-tab)
 - [Project Architecture](#project-architecture)
   - [Key Components](#key-components)
 - [⚠️Troubleshooting⚠️](#troubleshooting)
@@ -89,6 +99,18 @@ The script will use `SPOTIFY_USERNAME` as a fallback when operation-specific use
 ## Usage
 
 Execute the script using the Python module flag (`-m`) followed by the package path (`src.main`) and your chosen action flag.
+
+### Command-Line Interface (CLI)
+
+Use the following flags for CLI operations: `--export`, `--import-data`, `--erase`.
+
+### Graphical User Interface (GUI)
+
+Launch the graphical interface:
+
+```sh
+python -m src.main --gui
+```
 
 ### Export Data
 
@@ -198,6 +220,53 @@ Select playlists: 1,3
 
 ---
 
+## GUI Mode
+
+Launch the GUI using the `--gui` flag. The GUI provides a user-friendly way to manage the export, import, and erase operations.
+
+```sh
+python -m src.main --gui
+```
+
+The GUI is organized into several tabs:
+
+### Setup Tab
+
+- Configure your Spotify API **Client ID**, **Client Secret**, and **Redirect URI**.
+- Specify the **Usernames** for export, import, and erase operations.
+- Set the **Data File** path for saving/loading data (defaults to `spotify_data.json`).
+- Enable **Debug Mode** for verbose logging.
+- **Save Configuration:** Saves the current settings to the `.env` file.
+- **Test API Connection:** Authenticates with Spotify using the provided credentials and export username to verify the setup.
+
+### Export Tab
+
+- **Selective Export:** Check this to choose specific playlists to export. If unchecked, all playlists and liked songs (unless deselected in the prompt) will be exported.
+- **Clean Cache Before Export:** Clears the authentication cache before starting the export.
+- **Start Export:** Initiates the export process based on the settings in the Setup tab.
+
+### Import Tab
+
+- **Selective Import:** Check this to choose specific playlists from the data file to import. If unchecked, all playlists and liked songs (unless deselected in the prompt) from the file will be imported.
+- **Clean Cache Before Import:** Clears the authentication cache before starting the import.
+- **Start Import:** Initiates the import process using the data file specified in the Setup tab.
+
+### Erase Tab
+
+- **⚠️ WARNING:** Use this tab with extreme caution!
+- **Selective Erase:** Check this (recommended) to choose specific playlists to delete. You will also be prompted about deleting liked songs. If unchecked, **all** playlists and liked songs will be deleted after multiple confirmations.
+- **Clean Cache Before Erase:** Clears the authentication cache before starting the erase operation.
+- **Start Erase:** Initiates the deletion process on the account specified in the Setup tab.
+
+### Logs Tab
+
+- Displays real-time logs from the application.
+- Log messages are color-coded by severity (Error, Warning, Info, Debug).
+- **Clear Logs:** Clears the log display area.
+- **Save Logs:** Saves the current log content to a file.
+
+---
+
 ## Project Architecture
 
 The project is organized for modularity and ease of maintenance:
@@ -213,6 +282,7 @@ spotify_data_migration/
 │   │                     #  - Rate limiting and error handling
 │   ├── data_handler.py   # JSON operations for export/import
 │   ├── logger.py         # Logging configuration and setup
+│   ├── gui.py           # Graphical User Interface (Tkinter)
 │   └── main.py           # CLI and main execution logic
 ├── .env                  # Environment variable configuration
 ├── requirements.txt      # Project dependencies
@@ -228,12 +298,15 @@ spotify_data_migration/
   Provides robust functions to export data to a JSON file and import data from it, ensuring data integrity and proper error handling during file operations.
 
 - **Logger:**  
-  Configured for both human-readable logs and optional JSON-formatted logs for integration with monitoring tools.
+  Configured for console output and integration with the GUI log viewer.
 
 - **CLI (main.py):**  
   Parses command-line arguments and orchestrates the overall export/import/erase operations, with user confirmations for critical operations.
 
+- **GUI (gui.py):**  
+  Provides a graphical user interface built with Tkinter for easier interaction, including configuration management, operation execution, and log viewing.
 
+---
 
 ## ⚠️Troubleshooting⚠️
 
@@ -270,7 +343,7 @@ Complete these steps to register the user:
 
 For further details, refer to the [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api/).
 
-
+---
 
 ## Installing Dependencies
 

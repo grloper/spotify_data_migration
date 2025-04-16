@@ -357,6 +357,7 @@ def main():
     action_group.add_argument('--export', action='store_true', help='Export data from Spotify account specified by EXPORT_USERNAME.')
     action_group.add_argument('--import-data', action='store_true', help='Import data to Spotify account specified by IMPORT_USERNAME.')
     action_group.add_argument('--erase', action='store_true', help='Delete all playlists and liked songs from account specified by ERASE_USERNAME.')
+    action_group.add_argument('--gui', action='store_true', help='Launch the graphical user interface.')
 
     # Options
     parser.add_argument('--selective', '-s', action='store_true', help='Enable interactive selection of playlists.')
@@ -369,6 +370,23 @@ def main():
     # --- Setup Logging ---
     setup_logging(debug=args.debug)
     logger.info("Logging configured.")
+    
+    # --- Launch GUI if requested ---
+    if args.gui:
+        try:
+            from .gui import start_gui
+            logger.info("Starting GUI mode...")
+            start_gui()
+            return
+        except ImportError as e:
+            logger.error(f"Failed to import GUI module: {e}")
+            logger.error("Make sure you have tkinter installed (included with most Python installations).")
+            sys.exit(1)
+        except Exception as e:
+            logger.error(f"Error starting GUI: {e}", exc_info=True)
+            sys.exit(1)
+    
+    # --- Continue with CLI mode ---
     
     # --- Validate Configuration ---
     if not config.IS_CONFIG_VALID:
