@@ -17,16 +17,34 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: End Users/Desktop",
+        "Topic :: Multimedia :: Sound/Audio",
     ],
     python_requires=">=3.6",
     install_requires=[
         "spotipy>=2.22.1",
         "PyQt5>=5.15.9",
         "python-dotenv>=1.0.0",
+        "cryptography>=39.0.0",
     ],
-    entry_points={
-        "console_scripts": [
-            "spotify-migrate=main:main",
+    extras_require={
+        "dev": [
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+            "black>=23.0.0",
+            "mypy>=1.0.0",
+            "pylint>=2.15.0",
         ],
     },
+    entry_points={
+        "console_scripts": [
+            "spotify-migrate=src.main:main",
+        ],
+        "gui_scripts": [
+            "spotify-migrate-gui=src.main:main",
+        ],
+    },
+    include_package_data=True,
+    zip_safe=False,
 )

@@ -7,19 +7,27 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QTabWidget, QLabel, QLineEdit, QPushButton, 
                             QFileDialog, QCheckBox, QListWidget, QListWidgetItem,
                             QMessageBox, QProgressBar, QTextEdit, QGroupBox,
-                            QFormLayout, QScrollArea, QApplication, QDialog)
+                            QFormLayout, QScrollArea, QApplication, QDialog,
+                            QInputDialog)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 
-from spotify_client import SpotifyClient
-from operations import SpotifyOperations
-from logger import QTextEditLogger
+from src.core.spotify_client import SpotifyClient
+from src.core.operations import SpotifyOperations
+from src.ui.logger import QTextEditLogger
+
+# Configuration file path
+CONFIG_DIR = os.path.expanduser("~/.spotify_migration")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 logger = logging.getLogger(__name__)
 
+# Ensure config directory exists
+os.makedirs(CONFIG_DIR, exist_ok=True)
+
 class Worker(QThread):
     """Worker thread for performing Spotify operations."""
-    finished = pyqtSignal(bool, str)
+    finished = pyqtSignal(object)  # Accept any type of result
     progress = pyqtSignal(int)
     
     def __init__(self, operation, args):
@@ -30,10 +38,28 @@ class Worker(QThread):
     def run(self):
         try:
             result = self.operation(**self.args)
-            self.finished.emit(result, "Operation completed successfully" if result else "Operation failed")
+            self.finished.emit(result)
         except Exception as e:
             logger.error(f"Error in worker thread: {str(e)}")
-            self.finished.emit(False, f"Operation failed: {str(e)}")
+            self.finished.emit(None)  # Emit None on failure
+
+class PlaylistLoaderWorker(QThread):
+    """Worker thread specifically for loading playlists."""
+    finished = pyqtSignal(bool, list)
+    progress = pyqtSignal(int)
+    
+    def __init__(self, spotify_client):
+        super().__init__()
+        self.spotify_client = spotify_client
+    
+    def run(self):
+        try:
+            playlists = self.spotify_client.get_playlists()
+            # Return success=True and the playlist list
+            self.finished.emit(True, playlists)
+        except Exception as e:
+            logger.error(f"Error loading playlists: {str(e)}")
+            self.finished.emit(False, [])
 
 class PlaylistSelectionDialog(QDialog):
     """Dialog for selecting playlists."""
@@ -139,6 +165,13 @@ class SpotifyMigrationApp(QMainWindow):
         self.spotify_client = SpotifyClient()
         self.operations = None
         
+        # Set up instance variables
+        self.export_selected_playlists = []
+        self.import_selected_playlists = []
+        self.erase_selected_playlists = []
+        self.playlists_data = []
+        self.config_profiles = self.load_config_profiles()
+        
         self.init_ui()
     
     def init_ui(self):
@@ -155,7 +188,7 @@ class SpotifyMigrationApp(QMainWindow):
         self.client_id_input = QLineEdit()
         self.client_secret_input = QLineEdit()
         self.redirect_uri_input = QLineEdit()
-        self.redirect_uri_input.setText("http://localhost:8888/callback")
+        self.redirect_uri_input.setText("http://127.0.0.1:8888/callback")
         
         setup_layout.addRow("Client ID:", self.client_id_input)
         setup_layout.addRow("Client Secret:", self.client_secret_input)
@@ -167,6 +200,20 @@ class SpotifyMigrationApp(QMainWindow):
         
         self.auth_status = QLabel("Not authenticated")
         setup_layout.addRow("Status:", self.auth_status)
+        
+        # Add Configuration Options to Setup Tab
+        setup_layout.addRow("", QLabel(""))
+        setup_layout.addRow("Configuration Profiles:", QLabel(""))
+        
+        config_layout = QHBoxLayout()
+        self.load_config_btn = QPushButton("Load Profile")
+        self.load_config_btn.clicked.connect(self.load_profile)
+        self.save_config_btn = QPushButton("Save Profile")
+        self.save_config_btn.clicked.connect(self.save_profile)
+        config_layout.addWidget(self.load_config_btn)
+        config_layout.addWidget(self.save_config_btn)
+        
+        setup_layout.addRow("", config_layout)
         
         setup_tab.setLayout(setup_layout)
         
@@ -313,17 +360,88 @@ class SpotifyMigrationApp(QMainWindow):
         
         # Disable operation tabs until authenticated
         self.update_tab_states(False)
-        
-        # Set up instance variables
-        self.export_selected_playlists = []
-        self.import_selected_playlists = []
-        self.erase_selected_playlists = []
-        self.playlists_data = []
     
     def update_tab_states(self, authenticated):
         """Enable or disable operation tabs based on authentication status."""
         for i in range(1, self.tabs.count()):
             self.tabs.setTabEnabled(i, authenticated)
+    
+    def save_profile(self):
+        """Save current credentials and settings to a named profile."""
+        profile_name, ok = QInputDialog.getText(self, 'Save Profile', 'Enter profile name:')
+        
+        if not ok or not profile_name:
+            return
+            
+        # Get current credentials
+        client_id = self.client_id_input.text().strip()
+        client_secret = self.client_secret_input.text().strip()
+        redirect_uri = self.redirect_uri_input.text().strip()
+        
+        if not client_id or not client_secret or not redirect_uri:
+            QMessageBox.warning(self, "Missing Data", "Please enter all credential fields before saving.")
+            return
+        
+        # Create profile data
+        profile_data = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri
+        }
+        
+        # Update profiles and save
+        self.config_profiles[profile_name] = profile_data
+        self.save_config_profiles()
+        
+        QMessageBox.information(self, "Profile Saved", f"Profile '{profile_name}' has been saved.")
+    
+    def load_profile(self):
+        """Load a saved profile."""
+        if not self.config_profiles:
+            QMessageBox.information(self, "No Profiles", "No saved profiles found.")
+            return
+            
+        profile_name, ok = QInputDialog.getItem(
+            self, 'Load Profile', 'Select profile:', 
+            list(self.config_profiles.keys()), 0, False
+        )
+        
+        if not ok or not profile_name:
+            return
+            
+        profile = self.config_profiles.get(profile_name)
+        if not profile:
+            QMessageBox.warning(self, "Profile Error", f"Could not load profile '{profile_name}'.")
+            return
+            
+        # Apply credentials from profile
+        self.client_id_input.setText(profile.get("client_id", ""))
+        self.client_secret_input.setText(profile.get("client_secret", ""))
+        self.redirect_uri_input.setText(profile.get("redirect_uri", ""))
+        
+        QMessageBox.information(self, "Profile Loaded", f"Profile '{profile_name}' has been loaded.")
+    
+    def load_config_profiles(self):
+        """Load saved configuration profiles."""
+        if not os.path.exists(CONFIG_FILE):
+            return {}
+            
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading config profiles: {str(e)}")
+            return {}
+    
+    def save_config_profiles(self):
+        """Save configuration profiles to disk."""
+        try:
+            with open(CONFIG_FILE, 'w') as f:
+                json.dump(self.config_profiles, f, indent=2)
+            logger.info(f"Saved {len(self.config_profiles)} profiles to {CONFIG_FILE}")
+        except Exception as e:
+            logger.error(f"Error saving config profiles: {str(e)}")
+            QMessageBox.warning(self, "Save Error", f"Could not save profiles: {str(e)}")
     
     def authenticate(self):
         """Authenticate with Spotify."""
@@ -382,17 +500,8 @@ class SpotifyMigrationApp(QMainWindow):
                 self.operations = SpotifyOperations(self.spotify_client)
                 self.update_tab_states(True)
                 
-                # Load playlists
-                try:
-                    logger.info("Loading playlists...")
-                    self.playlists_data = self.spotify_client.get_playlists()
-                    logger.info(f"Loaded {len(self.playlists_data)} playlists")
-                except Exception as e:
-                    tb = traceback.format_exc()
-                    logger.error(f"Error loading playlists: {str(e)}\n{tb}")
-                    QMessageBox.warning(self, "Playlist Loading Error", 
-                                        f"Authentication successful, but there was an error loading playlists: {str(e)}")
-                    self.playlists_data = []
+                # Load playlists in background thread
+                self.load_playlists_progressively()
             else:
                 self.auth_status.setText("Authentication failed")
                 QMessageBox.critical(self, "Authentication Error", 
@@ -410,6 +519,41 @@ class SpotifyMigrationApp(QMainWindow):
         finally:
             # Always re-enable the auth button
             self.auth_button.setEnabled(True)
+    
+    def load_playlists_progressively(self):
+        """Load playlists in the background with progress updates."""
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)  # Indeterminate initially
+        
+        # Create worker thread
+        worker = Worker(self.spotify_client.get_playlists, {})
+        worker.finished.connect(self.on_playlists_loaded)
+        worker.progress.connect(self.update_playlist_progress)
+        worker.start()
+        
+        # Store worker as instance variable to prevent garbage collection
+        self.playlist_worker = worker
+    
+    def on_playlists_loaded(self, result):
+        """Handle playlist loading completion."""
+        self.progress_bar.setVisible(False)
+        
+        if result:
+            self.playlists_data = result
+            logger.info(f"Loaded {len(self.playlists_data)} playlists")
+        else:
+            logger.error("Failed to load playlists")
+            QMessageBox.warning(self, "Playlist Loading Error", 
+                               "Could not load playlists. Check log for details.")
+    
+    def update_playlist_progress(self, value):
+        """Update progress bar for playlist loading."""
+        if value <= 0 or value > 100:
+            # Indeterminate progress
+            self.progress_bar.setRange(0, 0)
+        else:
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(value)
     
     def select_export_playlists(self):
         """Open dialog to select playlists for export."""
@@ -575,6 +719,11 @@ class SpotifyMigrationApp(QMainWindow):
             QMessageBox.warning(self, "No Selection", "Please select at least one type of data to export.")
             return
         
+        # Show progress
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)  # Indeterminate
+        
+        # Call export operation
         args = {
             "export_playlists": export_playlists,
             "export_liked_songs": export_liked_songs,
@@ -582,12 +731,21 @@ class SpotifyMigrationApp(QMainWindow):
             "output_path": self.export_file_path.text()
         }
         
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)  # Indeterminate
+        worker = Worker(self.operations.export_data, args)
+        worker.finished.connect(self.on_export_finished)
+        worker.start()
         
-        self.worker = Worker(self.operations.export_data, args)
-        self.worker.finished.connect(self.on_operation_finished)
-        self.worker.start()
+        # Store worker as instance variable
+        self.export_worker = worker
+    
+    def on_export_finished(self, result):
+        """Handle export completion."""
+        self.progress_bar.setVisible(False)
+        
+        if result:
+            QMessageBox.information(self, "Export Complete", "Data has been successfully exported.")
+        else:
+            QMessageBox.critical(self, "Export Failed", "Failed to export data. Check log for details.")
     
     def import_data(self):
         """Import data to Spotify."""
@@ -606,6 +764,11 @@ class SpotifyMigrationApp(QMainWindow):
             QMessageBox.warning(self, "No Selection", "Please select at least one type of data to import.")
             return
         
+        # Show progress
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)  # Indeterminate
+        
+        # Call import operation
         args = {
             "import_file": self.import_file_path.text(),
             "import_playlists": import_playlists,
@@ -613,12 +776,21 @@ class SpotifyMigrationApp(QMainWindow):
             "selected_playlists": self.import_selected_playlists if self.import_selected_playlists else None
         }
         
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)  # Indeterminate
+        worker = Worker(self.operations.import_data, args)
+        worker.finished.connect(self.on_import_finished)
+        worker.start()
         
-        self.worker = Worker(self.operations.import_data, args)
-        self.worker.finished.connect(self.on_operation_finished)
-        self.worker.start()
+        # Store worker as instance variable
+        self.import_worker = worker
+    
+    def on_import_finished(self, result):
+        """Handle import completion."""
+        self.progress_bar.setVisible(False)
+        
+        if result:
+            QMessageBox.information(self, "Import Complete", "Data has been successfully imported.")
+        else:
+            QMessageBox.critical(self, "Import Failed", "Failed to import data. Check log for details.")
     
     def erase_data(self):
         """Erase data from Spotify."""
@@ -639,24 +811,34 @@ class SpotifyMigrationApp(QMainWindow):
                                QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
             return
         
+        # Show progress
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)  # Indeterminate
+        
+        # Call erase operation
         args = {
             "erase_playlists": erase_playlists,
             "erase_liked_songs": erase_liked_songs,
             "selected_playlists": self.erase_selected_playlists if self.erase_selected_playlists else None
         }
         
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)  # Indeterminate
+        worker = Worker(self.operations.erase_data, args)
+        worker.finished.connect(self.on_erase_finished)
+        worker.start()
         
-        self.worker = Worker(self.operations.erase_data, args)
-        self.worker.finished.connect(self.on_operation_finished)
-        self.worker.start()
+        # Store worker as instance variable
+        self.erase_worker = worker
     
-    def on_operation_finished(self, success, message):
-        """Handle operation completion."""
+    def on_erase_finished(self, result):
+        """Handle erase completion."""
         self.progress_bar.setVisible(False)
         
-        if success:
-            QMessageBox.information(self, "Operation Complete", message)
+        if result:
+            QMessageBox.information(self, "Erase Complete", "Data has been successfully erased.")
         else:
-            QMessageBox.critical(self, "Operation Failed", message)
+            QMessageBox.critical(self, "Erase Failed", "Failed to erase data. Check log for details.")
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = SpotifyMigrationApp()
+    window.show()
+    sys.exit(app.exec_())

@@ -12,13 +12,12 @@ import logging
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt5.QtWidgets import QApplication
-from gui import SpotifyMigrationApp  # Import from root-level gui.py instead of src.ui.gui
+from src.ui.spotify_app_window import SpotifyMigrationApp
 from src.ui.logger import setup_logger
 
-if __name__ == "__main__":
+def main():
     # Set up logging
-    setup_logger()
-    logger = logging.getLogger(__name__)
+    logger = setup_logger()
     logger.info("Starting Spotify Data Migration App")
     
     # Create and start the application
@@ -26,3 +25,6 @@ if __name__ == "__main__":
     window = SpotifyMigrationApp()
     window.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()

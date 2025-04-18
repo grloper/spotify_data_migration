@@ -2,7 +2,15 @@
 
 A desktop application that allows you to export, import, and erase data from your Spotify account.
 
+## Prerequisites
+
+- Python 3.6 or higher
+- Spotify account
+- Spotify Developer account
+
 ## Installation
+
+### Option 1: Standard Installation
 
 1. Clone this repository:
 ```bash
@@ -10,28 +18,57 @@ git clone https://github.com/yourusername/spotify_data_migration.git
 cd spotify_data_migration
 ```
 
-2. Install required dependencies:
+2. Create and activate a virtual environment (recommended):
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. Install required dependencies:
 ```bash
 pip install -r requirements.txt
+```
+
+### Option 2: Development Installation
+
+If you plan to modify the code:
+
+```bash
+# After cloning and activating virtual environment
+pip install -e .
 ```
 
 ## Getting Started
 
 1. Create a Spotify Developer App:
    - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
-   - Create a new application
+   - Log in with your Spotify account
+   - Click "Create app"
+   - Fill in the app name, description, and website
    - Add `http://localhost:8888/callback` as a redirect URI
-   - Note your Client ID and Client Secret
+   - Check the Developer Terms of Service and click "Create"
+   - Note your Client ID and Client Secret from the app dashboard
 
 2. Run the application:
 ```bash
+# If using standard installation
 python main.py
+
+# If installed with pip
+spotify-migrate
 ```
 
 3. In the Setup tab:
    - Enter your Spotify Client ID, Client Secret, and Redirect URI
    - Click "Authenticate" to connect to your Spotify account
    - **Important**: Make sure the redirect URI matches exactly what's in your Spotify Dashboard
+   - A browser window will open for you to log in to Spotify and authorize the application
+   - After authorizing, you'll be redirected to the callback URL - this is normal!
 
 ## Usage
 
