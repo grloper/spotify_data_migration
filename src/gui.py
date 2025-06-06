@@ -155,27 +155,15 @@ class SpotifyMigratorGUI:
         redirect_uri_entry = ttk.Entry(cred_frame, textvariable=self.redirect_uri_var, width=50)
         redirect_uri_entry.grid(row=2, column=1, sticky=tk.W, padx=5, pady=5)
         
-        # Create a frame for usernames
-        user_frame = ttk.LabelFrame(frame, text="Spotify Usernames", padding=10)
+        # Create a frame for username
+        user_frame = ttk.LabelFrame(frame, text="Spotify Username", padding=10)
         user_frame.pack(fill=tk.X, pady=10)
         
-        # Export Username
-        ttk.Label(user_frame, text="Export Username:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.export_username_var = tk.StringVar()
-        export_username_entry = ttk.Entry(user_frame, textvariable=self.export_username_var, width=50)
-        export_username_entry.grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
-        
-        # Import Username
-        ttk.Label(user_frame, text="Import Username:").grid(row=1, column=0, sticky=tk.W, pady=5)
-        self.import_username_var = tk.StringVar()
-        import_username_entry = ttk.Entry(user_frame, textvariable=self.import_username_var, width=50)
-        import_username_entry.grid(row=1, column=1, sticky=tk.W, padx=5, pady=5)
-        
-        # Erase Username
-        ttk.Label(user_frame, text="Erase Username:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.erase_username_var = tk.StringVar()
-        erase_username_entry = ttk.Entry(user_frame, textvariable=self.erase_username_var, width=50)
-        erase_username_entry.grid(row=2, column=1, sticky=tk.W, padx=5, pady=5)
+        # Single Username Field
+        ttk.Label(user_frame, text="Username:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        self.username_var = tk.StringVar()
+        username_entry = ttk.Entry(user_frame, textvariable=self.username_var, width=50)
+        username_entry.grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
         
         # Data File path
         file_frame = ttk.LabelFrame(frame, text="Data File", padding=10)
@@ -226,7 +214,7 @@ class SpotifyMigratorGUI:
         
         # Clean cache before exporting
         self.export_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Export", 
+        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Export (Ensures using selected username)", 
                                        variable=self.export_clean_cache_var)
         clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
@@ -270,7 +258,7 @@ class SpotifyMigratorGUI:
         
         # Clean cache before importing
         self.import_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Import", 
+        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Import (Ensures using selected username)", 
                                        variable=self.import_clean_cache_var)
         clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
@@ -319,7 +307,7 @@ class SpotifyMigratorGUI:
         
         # Clean cache before erasing
         self.erase_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Erase", 
+        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Erase (Ensures using selected username)", 
                                        variable=self.erase_clean_cache_var)
         clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
@@ -447,9 +435,7 @@ class SpotifyMigratorGUI:
         self.client_id_var.set(config.CLIENT_ID or "")
         self.client_secret_var.set(config.CLIENT_SECRET or "")
         self.redirect_uri_var.set(config.REDIRECT_URI or "http://127.0.0.1:8080")
-        self.export_username_var.set(config.EXPORT_USERNAME or "")
-        self.import_username_var.set(config.IMPORT_USERNAME or "")
-        self.erase_username_var.set(config.ERASE_USERNAME or "")
+        self.username_var.set(config.SPOTIFY_USERNAME or "")
         self.data_file_var.set(config.DATA_FILE or "")
 
     def save_config(self):
@@ -461,9 +447,7 @@ class SpotifyMigratorGUI:
             content = f"""CLIENT_ID='{self.client_id_var.get()}'
 CLIENT_SECRET='{self.client_secret_var.get()}'
 REDIRECT_URI='{self.redirect_uri_var.get()}'
-EXPORT_USERNAME='{self.export_username_var.get()}'
-IMPORT_USERNAME='{self.import_username_var.get()}'
-ERASE_USERNAME='{self.erase_username_var.get()}'
+SPOTIFY_USERNAME='{self.username_var.get()}'
 """
             
             with open(dotenv_path, 'w') as f:
@@ -499,7 +483,7 @@ ERASE_USERNAME='{self.erase_username_var.get()}'
         """Run the API connection test in a separate thread."""
         try:
             # Create a test manager for validation
-            username = self.export_username_var.get() or "test_user"
+            username = self.username_var.get() or "test_user"
             manager = SpotifyManager(
                 username=username,
                 client_id=self.client_id_var.get(),
@@ -554,7 +538,7 @@ ERASE_USERNAME='{self.erase_username_var.get()}'
         try:
             # Create the Spotify manager
             self.export_manager = SpotifyManager(
-                username=self.export_username_var.get(),
+                username=self.username_var.get(),
                 client_id=self.client_id_var.get(),
                 client_secret=self.client_secret_var.get(),
                 redirect_uri=self.redirect_uri_var.get(),
@@ -700,7 +684,7 @@ ERASE_USERNAME='{self.erase_username_var.get()}'
             
             # Create the Spotify manager
             self.import_manager = SpotifyManager(
-                username=self.import_username_var.get(),
+                username=self.username_var.get(),
                 client_id=self.client_id_var.get(),
                 client_secret=self.client_secret_var.get(),
                 redirect_uri=self.redirect_uri_var.get(),
@@ -818,7 +802,7 @@ ERASE_USERNAME='{self.erase_username_var.get()}'
         try:
             # Create the Spotify manager
             self.erase_manager = SpotifyManager(
-                username=self.erase_username_var.get(),
+                username=self.username_var.get(),
                 client_id=self.client_id_var.get(),
                 client_secret=self.client_secret_var.get(),
                 redirect_uri=self.redirect_uri_var.get(),
@@ -995,15 +979,9 @@ ERASE_USERNAME='{self.erase_username_var.get()}'
             messagebox.showerror("Error", "Client ID and Client Secret are required.")
             return False
             
-        # Check username based on operation
-        if operation_type == 'export' and not self.export_username_var.get():
-            messagebox.showerror("Error", "Export Username is required.")
-            return False
-        elif operation_type == 'import' and not self.import_username_var.get():
-            messagebox.showerror("Error", "Import Username is required.")
-            return False
-        elif operation_type == 'erase' and not self.erase_username_var.get():
-            messagebox.showerror("Error", "Erase Username is required.")
+        # Check username for all operations
+        if not self.username_var.get():
+            messagebox.showerror("Error", "Spotify Username is required.")
             return False
             
         # Check data file for export/import
