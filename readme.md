@@ -34,13 +34,14 @@ This tool helps you export your Spotify playlists and liked songs to a JSON file
 
 ### Export Data (Source Account)
 1. In Setup tab, enter API credentials and source username
-2. Check "Clean Cache" in Export tab
-3. Click "Start Export" to save your playlists and liked songs
+2. Click "Start Export" to save your playlists and liked songs
 
 ### Import Data (Destination Account)
 1. Change username to destination account in Setup tab
-2. Check "Clean Cache" in Import tab (critical!)
-3. Click "Start Import" to add playlists and liked songs
+2. Click "Start Import" to add playlists and liked songs
+
+## New Feature: Automatic Cache Management
+The tool now automatically cleans authentication cache when switching between usernames, so you don't need to manually select "Clean Cache" anymore.
 
 ## Troubleshooting
 
@@ -55,8 +56,8 @@ This is the most common error and means you need to add the Spotify account to y
 
 ### Authentication Issues
 - Ensure the Redirect URI exactly matches `http://127.0.0.1:8080`
-- Clear cached tokens: delete any `.cache*` files
-- Always check "Clean Cache" when switching between accounts
+- The tool now automatically clears cached tokens when username changes
+- If you still have issues, manually delete any `.cache*` files in the application directory
 
 ## GUI Features
 

@@ -19,6 +19,10 @@ INITIAL_RETRY_DELAY = 1 # seconds
 MAX_TRACKS_PER_ADD = 100 # For adding tracks to playlist
 MAX_TRACKS_PER_LIKE_DELETE = 50 # For liking/unliking tracks
 
+# Track the last authenticated username across instances
+# This helps detect when a user switches accounts
+_last_authenticated_username = None
+
 class SpotifyManager:
     """Manages authentication and interactions with the Spotify API."""
 
@@ -33,8 +37,23 @@ class SpotifyManager:
         self.sp: Optional[spotipy.Spotify] = None
         self.user_id: Optional[str] = None
 
+    def _should_clean_cache(self) -> bool:
+        """Determines if cache should be cleaned based on username changes."""
+        global _last_authenticated_username
+        
+        # Always clean cache if username is different from last authenticated username
+        if _last_authenticated_username is not None and _last_authenticated_username != self.username:
+            logger.info(f"Username changed from '{_last_authenticated_username}' to '{self.username}' - will clean cache")
+            return True
+        return False
+
     def authenticate(self, clean_cache: bool = False) -> bool:
         """Authenticates the Spotify user and stores the client instance."""
+        global _last_authenticated_username
+        
+        # Auto-clean cache if username changed since last authentication
+        clean_cache = clean_cache or self._should_clean_cache()
+        
         cache_path = os.path.join(config.CACHE_DIR, f".cache-{self.username}")
         logger.debug(f"Using cache path: {cache_path}")
 
@@ -63,6 +82,22 @@ class SpotifyManager:
             # Verify authentication and get user ID
             me = self.sp.me()
             self.user_id = me['id'] 
+            
+            # Check if authenticated user matches requested username
+            if self.user_id != self.username and not clean_cache:
+                # Username mismatch detected - clean cache and retry authentication
+                logger.warning(f"Username mismatch! Requested: {self.username}, Authenticated: {self.user_id}")
+                logger.info(f"Cleaning cache and retrying authentication...")
+                
+                # Update last authenticated username to force cache cleaning
+                _last_authenticated_username = self.user_id
+                
+                # Retry with clean cache
+                return self.authenticate(clean_cache=True)
+                
+            # Update the last authenticated username for future checks
+            _last_authenticated_username = self.username
+            
             logger.info(f"Successfully authenticated user: {self.username} (ID: {self.user_id})")
             return True
             

@@ -212,10 +212,11 @@ class SpotifyMigratorGUI:
                                      variable=self.export_selective_var)
         selective_check.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Clean cache before exporting
+        # Clean cache checkbox - kept but not necessary (legacy support)
+        # Now shows an explanatory note that it's automatic
         self.export_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Export (Ensures using selected username)", 
-                                       variable=self.export_clean_cache_var)
+        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Export (automatic when username changes)", 
+                                       variable=self.export_clean_cache_var, state="disabled")
         clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
         # Export button
@@ -256,10 +257,11 @@ class SpotifyMigratorGUI:
                                      variable=self.import_selective_var)
         selective_check.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Clean cache before importing
+        # Clean cache checkbox - kept but not necessary (legacy support)
+        # Now shows an explanatory note that it's automatic
         self.import_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Import (Ensures using selected username)", 
-                                       variable=self.import_clean_cache_var)
+        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Import (automatic when username changes)", 
+                                       variable=self.import_clean_cache_var, state="disabled")
         clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
         # Import button
@@ -305,10 +307,11 @@ class SpotifyMigratorGUI:
                                      variable=self.erase_selective_var)
         selective_check.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Clean cache before erasing
+        # Clean cache checkbox - kept but not necessary (legacy support)
+        # Now shows an explanatory note that it's automatic
         self.erase_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Erase (Ensures using selected username)", 
-                                       variable=self.erase_clean_cache_var)
+        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Erase (automatic when username changes)", 
+                                       variable=self.erase_clean_cache_var, state="disabled")
         clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
         # Erase button
@@ -545,8 +548,8 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
                 scope=config.SPOTIFY_SCOPE
             )
             
-            # Authenticate
-            if not self.export_manager.authenticate(clean_cache=self.export_clean_cache_var.get()):
+            # Authenticate - cache cleaning is now automatic based on username changes
+            if not self.export_manager.authenticate():
                 logger.error("Authentication failed for export")
                 self.root.after(0, lambda: messagebox.showerror("Error", 
                     "Failed to authenticate for export. Check credentials and username."))
@@ -691,8 +694,8 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
                 scope=config.SPOTIFY_SCOPE
             )
             
-            # Authenticate
-            if not self.import_manager.authenticate(clean_cache=self.import_clean_cache_var.get()):
+            # Authenticate - cache cleaning is now automatic based on username changes
+            if not self.import_manager.authenticate():
                 logger.error("Authentication failed for import")
                 self.root.after(0, lambda: messagebox.showerror("Error", 
                     "Failed to authenticate for import. Check credentials and username."))
@@ -809,8 +812,8 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
                 scope=config.SPOTIFY_SCOPE
             )
             
-            # Authenticate
-            if not self.erase_manager.authenticate(clean_cache=self.erase_clean_cache_var.get()):
+            # Authenticate - cache cleaning is now automatic based on username changes
+            if not self.erase_manager.authenticate():
                 logger.error("Authentication failed for erase operation")
                 self.root.after(0, lambda: messagebox.showerror("Error", 
                     "Failed to authenticate for erase operation. Check credentials and username."))
