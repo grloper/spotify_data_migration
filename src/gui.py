@@ -212,12 +212,7 @@ class SpotifyMigratorGUI:
                                      variable=self.export_selective_var)
         selective_check.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Clean cache checkbox - kept but not necessary (legacy support)
-        # Now shows an explanatory note that it's automatic
-        self.export_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Export (automatic when username changes)", 
-                                       variable=self.export_clean_cache_var, state="disabled")
-        clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        # Clean cache checkbox removed - functionality is automatic
         
         # Export button
         button_frame = ttk.Frame(frame)
@@ -238,7 +233,7 @@ class SpotifyMigratorGUI:
             "in the 'Export Username' field.\n\n"
             "The data will be saved to the specified Data File path.\n\n"
             "If 'Selective Export' is checked, you will be able to choose which playlists to export.\n\n"
-            "If 'Clean Cache' is checked, the authentication cache will be cleared before export."
+            "Authentication cache is automatically cleaned when switching between usernames."
         )
         info_text.config(state=tk.DISABLED)
 
@@ -257,12 +252,7 @@ class SpotifyMigratorGUI:
                                      variable=self.import_selective_var)
         selective_check.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Clean cache checkbox - kept but not necessary (legacy support)
-        # Now shows an explanatory note that it's automatic
-        self.import_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Import (automatic when username changes)", 
-                                       variable=self.import_clean_cache_var, state="disabled")
-        clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        # Clean cache checkbox removed - functionality is automatic
         
         # Import button
         button_frame = ttk.Frame(frame)
@@ -283,7 +273,7 @@ class SpotifyMigratorGUI:
             "specified in the 'Import Username' field.\n\n"
             "The data will be read from the specified Data File path.\n\n"
             "If 'Selective Import' is checked, you will be able to choose which playlists to import.\n\n"
-            "If 'Clean Cache' is checked, the authentication cache will be cleared before import."
+            "Authentication cache is automatically cleaned when switching between usernames."
         )
         info_text.config(state=tk.DISABLED)
 
@@ -307,12 +297,7 @@ class SpotifyMigratorGUI:
                                      variable=self.erase_selective_var)
         selective_check.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Clean cache checkbox - kept but not necessary (legacy support)
-        # Now shows an explanatory note that it's automatic
-        self.erase_clean_cache_var = tk.BooleanVar()
-        clean_cache_check = ttk.Checkbutton(options_frame, text="Clean Cache Before Erase (automatic when username changes)", 
-                                       variable=self.erase_clean_cache_var, state="disabled")
-        clean_cache_check.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        # Clean cache checkbox removed - functionality is automatic
         
         # Erase button
         button_frame = ttk.Frame(frame)
@@ -333,6 +318,7 @@ class SpotifyMigratorGUI:
             "⚠️ CAUTION: This operation will delete playlists and/or liked songs from your Spotify account!\n\n"
             "The deletion will be performed on the account specified in the 'Erase Username' field.\n\n"
             "If 'Selective Erase' is checked (recommended), you will be able to choose which playlists to delete.\n\n"
+            "Authentication cache is automatically cleaned when switching between usernames.\n\n"
             "This operation CANNOT be undone. Make sure you have a backup if needed."
         )
         info_text.config(state=tk.DISABLED)
