@@ -2,6 +2,8 @@
 
 This tool helps you export your Spotify playlists and liked songs to a JSON file, then import them to another Spotify account.
 
+![Spotify Data Migration Tool Screenshot](assets/image.png)
+
 ## Quick Start
 
 1. **Create a Spotify Developer App**
