@@ -582,22 +582,34 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
             # Process selected playlists for export
             playlist_data = []
             for p in selected_playlists:
-                logger.info(f"Processing playlist: {p.get('name', 'Unnamed Playlist')}")
+                playlist_name = p.get('name', 'Unnamed Playlist')
+                logger.info(f"Processing playlist: {playlist_name}")
                 
                 # If tracks weren't already fetched during selection
                 if 'tracks' not in p or not self.export_selective_var.get():
                     tracks = self.export_manager.get_playlist_tracks(p['id'])
                     if tracks is None:
-                        logger.warning(f"Failed to fetch tracks for {p.get('name')}. Skipping tracks.")
+                        logger.warning(f"Failed to fetch tracks for {playlist_name}. Skipping tracks.")
                         tracks = []
                 else:
                     tracks = p['tracks']
+                
+                # Extract and log image information
+                images = p.get('images', [])
+                if images:
+                    logger.info(f"Found {len(images)} image(s) for playlist '{playlist_name}'")
+                    for i, img in enumerate(images):
+                        size = f"{img.get('width', '?')}x{img.get('height', '?')}"
+                        logger.debug(f"  Image {i+1}: {size} - {img.get('url', 'No URL')}")
+                else:
+                    logger.info(f"No images found for playlist '{playlist_name}'")
                     
                 playlist_data.append({
                     'id': p['id'],
-                    'name': p.get('name', 'Unnamed Playlist'),
+                    'name': playlist_name,
                     'public': p.get('public', False),
                     'description': p.get('description', ''),
+                    'images': images,
                     'tracks': tracks
                 })
                 
@@ -735,10 +747,15 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
                     playlist_name = playlist.get('name', f'Imported Playlist {i}')
                     is_public = playlist.get('public', False)
                     track_uris = playlist.get('tracks', [])
+                    images = playlist.get('images', [])
                     
                     if not isinstance(track_uris, list):
                         logger.warning(f"Skipping playlist '{playlist_name}' due to invalid tracks format")
                         continue
+                    
+                    # Log image information if available  
+                    if images:
+                        logger.info(f"Playlist '{playlist_name}' has {len(images)} image(s) (not imported - images are preserved in export data only)")
                         
                     self.import_manager.create_playlist_and_add_tracks(playlist_name, is_public, track_uris)
             
