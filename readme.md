@@ -34,14 +34,25 @@ This tool helps you export your Spotify playlists and liked songs to a JSON file
 
 ### Export Data (Source Account)
 1. In Setup tab, enter API credentials and source username
-2. Click "Start Export" to save your playlists and liked songs
+2. Click "Start Export" to save your playlists, liked songs, and **playlist images**
 
 ### Import Data (Destination Account)
 1. Change username to destination account in Setup tab
 2. Click "Start Import" to add playlists and liked songs
 
-## New Feature: Automatic Cache Management
-The tool now automatically cleans authentication cache when switching between usernames, so you don't need to manually select "Clean Cache" anymore.
+## New Features
+
+### Playlist Image Export
+The tool now exports playlist images and custom album covers! This includes:
+- ✅ Custom uploaded playlist covers
+- ✅ Auto-generated mosaic covers
+- ✅ Multiple image resolutions
+- ✅ Image URLs preserved in export data
+
+Playlist images are automatically included in your export JSON file for future use.
+
+### Automatic Cache Management
+The tool automatically cleans authentication cache when switching between usernames, so you don't need to manually select "Clean Cache" anymore.
 
 ## Troubleshooting
 
