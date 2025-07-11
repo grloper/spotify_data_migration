@@ -755,9 +755,11 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
                     
                     # Log image information if available  
                     if images:
-                        logger.info(f"Playlist '{playlist_name}' has {len(images)} image(s) (not imported - images are preserved in export data only)")
+                        logger.info(f"Playlist '{playlist_name}' has {len(images)} image(s) - attempting to import cover image")
+                    else:
+                        logger.info(f"Playlist '{playlist_name}' has no images")
                         
-                    self.import_manager.create_playlist_and_add_tracks(playlist_name, is_public, track_uris)
+                    self.import_manager.create_playlist_and_add_tracks(playlist_name, is_public, track_uris, images)
             
             # Show success message
             self.root.after(0, lambda: messagebox.showinfo("Success", 

@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import base64
 from typing import List, Dict, Any, Callable, Optional
 
 import spotipy
@@ -246,8 +247,8 @@ class SpotifyManager:
         logger.info("Finished adding tracks to Liked Songs.")
 
 
-    def create_playlist_and_add_tracks(self, name: str, public: bool, track_uris: List[str]):
-        """Creates a new playlist and adds tracks to it in batches."""
+    def create_playlist_and_add_tracks(self, name: str, public: bool, track_uris: List[str], images: Optional[List[Dict[str, Any]]] = None):
+        """Creates a new playlist and adds tracks to it in batches. Optionally sets playlist cover image."""
         if not self.sp or not self.user_id:
             logger.error("Cannot create playlist: Spotify client not authenticated or user ID not found.")
             return
@@ -264,6 +265,20 @@ class SpotifyManager:
 
             new_playlist_id = new_playlist['id']
             logger.info(f"Playlist '{name}' created successfully with ID: {new_playlist_id}")
+
+            # Try to set playlist cover image if provided
+            if images and isinstance(images, list) and len(images) > 0:
+                # Use the first (usually highest quality) image
+                image_url = images[0].get('url')
+                if image_url:
+                    logger.info(f"Attempting to set cover image for playlist '{name}'")
+                    success = self.upload_playlist_cover_image(new_playlist_id, image_url)
+                    if success:
+                        logger.info(f"Successfully set cover image for playlist '{name}'")
+                    else:
+                        logger.warning(f"Failed to set cover image for playlist '{name}' - continuing without image")
+                else:
+                    logger.warning(f"No valid image URL found in playlist '{name}' image data")
 
             if not track_uris:
                 logger.info(f"No tracks to add to playlist '{name}'.")
@@ -309,3 +324,62 @@ class SpotifyManager:
                  logger.error(f"Failed to remove batch {i // MAX_TRACKS_PER_LIKE_DELETE + 1} of liked songs.")
                  # Optionally: Decide whether to continue or stop
         logger.info("Finished removing tracks from Liked Songs.")
+
+    def upload_playlist_cover_image(self, playlist_id: str, image_url: str) -> bool:
+        """
+        Downloads an image from a URL and uploads it as the playlist cover.
+        
+        Args:
+            playlist_id: The Spotify ID of the playlist
+            image_url: The URL of the image to download and upload
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.sp:
+            logger.error("Spotify client not authenticated")
+            return False
+            
+        if not image_url:
+            logger.debug("No image URL provided")
+            return False
+            
+        try:
+            logger.debug(f"Downloading image from URL: {image_url}")
+            
+            # Download the image
+            response = requests.get(image_url, timeout=10)
+            response.raise_for_status()
+            
+            # Check content type
+            content_type = response.headers.get('content-type', '').lower()
+            if 'image' not in content_type:
+                logger.warning(f"URL does not appear to be an image (content-type: {content_type})")
+                return False
+                
+            # Check file size (Spotify limit is 256KB)
+            image_data = response.content
+            if len(image_data) > 256 * 1024:  # 256KB limit
+                logger.warning(f"Image too large ({len(image_data)} bytes, max 256KB)")
+                return False
+                
+            # Convert to base64
+            image_b64 = base64.b64encode(image_data).decode('utf-8')
+            
+            # Upload to Spotify
+            logger.debug(f"Uploading image to playlist {playlist_id}")
+            result = self._spotify_api_call(self.sp.playlist_upload_cover_image, playlist_id, image_b64)
+            
+            if result is not None:
+                logger.info(f"Successfully uploaded cover image to playlist {playlist_id}")
+                return True
+            else:
+                logger.error(f"Failed to upload cover image to playlist {playlist_id}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error downloading image from {image_url}: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error uploading playlist cover image: {e}", exc_info=True)
+            return False
