@@ -24,7 +24,9 @@ SPOTIFY_USERNAME = os.getenv('SPOTIFY_USERNAME')
 
 # --- Spotify API Scopes ---
 # Added 'playlist-read-private' to ensure all playlists are fetched during export
+# Added 'ugc-image-upload' to allow uploading playlist cover images
 SPOTIFY_SCOPE = (
+    'ugc-image-upload '
     'playlist-read-private '      
     'playlist-modify-public '
     'playlist-modify-private '

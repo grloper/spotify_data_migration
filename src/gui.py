@@ -1125,15 +1125,36 @@ SPOTIFY_USERNAME='{self.username_var.get()}'
         
         # Mouse wheel scrolling
         def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            try:
+                # Check if canvas still exists and is mapped to a valid window
+                canvas.winfo_exists()  # This will raise TclError if canvas is destroyed
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            except Exception:
+                # Canvas was destroyed or is no longer valid - silently ignore
+                pass
             
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         # Clean up binding when window closes
         def _on_closing():
-            canvas.unbind_all("<MouseWheel>")
-            selection_window.destroy()
-            callback([])  # Empty list indicates cancellation
+            try:
+                # Unbind the mousewheel from all widgets
+                canvas.unbind_all("<MouseWheel>")
+                
+                # Explicitly destroy widgets in a controlled order
+                checkbox_frame.destroy()
+                canvas.destroy()
+                scrollbar.destroy()
+                list_frame.destroy()
+                
+                # Finally close the window
+                selection_window.destroy()
+                
+                # Return an empty list to the callback
+                callback([])  # Empty list indicates cancellation
+            except:
+                # Catch any errors in cleanup and make sure to always call the callback
+                callback([])  # Empty list indicates cancellation
             
         selection_window.protocol("WM_DELETE_WINDOW", _on_closing)
 

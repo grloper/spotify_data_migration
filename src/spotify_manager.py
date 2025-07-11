@@ -59,14 +59,32 @@ class SpotifyManager:
         logger.debug(f"Using cache path: {cache_path}")
 
         if clean_cache:
+            logger.info(f"Cleaning authentication cache for user: {self.username}")
             if os.path.exists(cache_path):
                 try:
                     os.remove(cache_path)
-                    logger.info(f"Deleted cache file: {cache_path}")
-                except OSError as e:
-                    logger.error(f"Error deleting cache file {cache_path}: {e}", exc_info=True)
-            else:
-                 logger.info(f"Cache file {cache_path} not found, skipping deletion.")
+                    logger.info(f"Removed cache file: {cache_path}")
+                except Exception as e:
+                    logger.error(f"Error removing cache file {cache_path}: {e}")
+
+        # Validate required scopes for functionality
+        required_scopes = {
+            'playlist-read-private': "read playlists",
+            'playlist-modify-public': "create public playlists", 
+            'playlist-modify-private': "create private playlists",
+            'user-library-read': "read liked songs",
+            'user-library-modify': "add/remove liked songs",
+            'ugc-image-upload': "upload playlist cover images"
+        }
+        
+        missing_scopes = []
+        for scope, purpose in required_scopes.items():
+            if scope not in self.scope:
+                missing_scopes.append(f"{scope} (needed to {purpose})")
+                
+        if missing_scopes:
+            logger.warning(f"Missing recommended scopes: {', '.join(missing_scopes)}")
+            # Continue anyway but log the warning
 
         try:
             auth_manager = SpotifyOAuth(
@@ -110,8 +128,7 @@ class SpotifyManager:
              logger.error(f"Network error during authentication for {self.username}: {e}", exc_info=True)
              return False
         except Exception as e:
-            # Catch unexpected errors during auth
-            logger.error(f"An unexpected error occurred during authentication for {self.username}: {e}", exc_info=True)
+            logger.error(f"Unexpected error during authentication for {self.username}: {e}", exc_info=True)
             return False
 
     def _handle_auth_error(self, e: SpotifyException, auth_manager: Optional[SpotifyOAuth]):
@@ -366,6 +383,22 @@ class SpotifyManager:
             # Convert to base64
             image_b64 = base64.b64encode(image_data).decode('utf-8')
             
+            # Make sure token is fresh before attempting the upload
+            try:
+                # Force token refresh if needed
+                if hasattr(self.sp.auth_manager, 'refresh_access_token'):
+                    current_token = self.sp.auth_manager.get_cached_token()
+                    if current_token and self.sp.auth_manager.is_token_expired(current_token):
+                        logger.debug("Token expired, refreshing before image upload")
+                        self.sp.auth_manager.refresh_access_token(current_token['refresh_token'])
+            except Exception as token_err:
+                logger.warning(f"Error refreshing token: {token_err}. Continuing anyway...")
+            
+            # Upload to Spotify - explicitly check for 'ugc-image-upload' scope
+            if 'ugc-image-upload' not in self.scope:
+                logger.error("Missing 'ugc-image-upload' scope required for image upload")
+                return False
+                
             # Upload to Spotify
             logger.debug(f"Uploading image to playlist {playlist_id}")
             result = self._spotify_api_call(self.sp.playlist_upload_cover_image, playlist_id, image_b64)
